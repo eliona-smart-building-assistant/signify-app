@@ -17,29 +17,29 @@ openapi: 3.0.3
 
 info:
   version: 1.0.0
-  title: App template API
-  description: API to access and configure the app template
+  title: Signify app API
+  description: API to access and configure the signify app
 externalDocs:
-  description: Find out more about the app template
-  url: https://github.com/eliona-smart-building-assistant/app-template
+  description: Find out more about the signify app
+  url: https://github.com/eliona-smart-building-assistant/signify-app
 servers:
-  - url: http://template/v1
+  - url: http://signify/v1
 
 tags:
   - name: Configuration
     description: Configure the app
     externalDocs:
-      url: https://github.com/eliona-smart-building-assistant/app-template
+      url: https://github.com/eliona-smart-building-assistant/signify-app
 
   - name: Version
     description: API version
     externalDocs:
-      url: https://github.com/eliona-smart-building-assistant/app-template
+      url: https://github.com/eliona-smart-building-assistant/signify-app
 
   - name: Customization
     description: Help to customize Eliona environment
     externalDocs:
-      url: https://github.com/eliona-smart-building-assistant/app-template
+      url: https://github.com/eliona-smart-building-assistant/signify-app
 
 paths:
   /configs:
@@ -218,11 +218,30 @@ components:
           description: Internal identifier for the configured API (created automatically).
           readOnly: true
           nullable: true
-        apiAccessChangeMe:
+        baseUrl:
           type: string
           format: string
-          description: There should be things like API address, access keys and so on.
-          example: 10.10.10.101
+          description: Base URL connecting signify cloud
+        service:
+          type: string
+          format: string
+          description: Service connecting signify cloud
+        serviceId:
+          type: string
+          format: string
+          description: Service ID connecting signify cloud
+        serviceSecret:
+          type: string
+          format: string
+          description: Service secret connecting signify cloud
+        appKey:
+          type: string
+          format: string
+          description: App key connecting signify cloud
+        appSecret:
+          type: string
+          format: string
+          description: App secret connecting signify cloud
         enable:
           type: boolean
           description: Flag to enable or disable fetching from this API
@@ -239,13 +258,6 @@ components:
           nullable: true
         assetFilter:
           $ref: "#/components/schemas/AssetFilter"
-          nullable: true
-          example:
-            [
-              [{ "parameter": "deviceName", "regex": "Main.*" }, { "parameter": "deviceType", "regex": "110" }],
-              [{ "parameter": "macAddress", "regex": "(70:82:0e:12:28:cc|70:56:06:12:.*)" }],
-              [{ "parameter": "ipAddress", "regex": "192\\.168\\..*" }],
-            ]
         active:
           type: boolean
           readOnly: true
@@ -253,7 +265,11 @@ components:
           nullable: true
         projectIDs:
           type: array
-          description: List of Eliona project ids for which this device should collect data. For each project id all smart devices are automatically created as an asset in Eliona. The mapping between Eliona is stored as an asset mapping in the KentixONE app.
+          description:
+            List of Eliona project ids for which this device should collect data.
+            For each project id all smart devices are automatically created as an
+            asset in Eliona. The mapping between Eliona is stored as an asset mapping
+            in the signify app.
           nullable: true
           items:
             type: string

@@ -16,8 +16,7 @@
 package main
 
 import (
-	"template/conf"
-	"template/eliona"
+	"signify/eliona"
 	"time"
 
 	"github.com/eliona-smart-building-assistant/go-eliona/app"
@@ -49,7 +48,6 @@ func main() {
 	// Init the app before the first run.
 	app.Init(db.Pool(), app.AppName(),
 		app.ExecSqlFile("conf/init.sql"),
-		conf.InitConfiguration,
 		eliona.InitEliona,
 	)
 
