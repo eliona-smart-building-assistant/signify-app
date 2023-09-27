@@ -17,8 +17,8 @@ package main
 
 import (
 	"net/http"
-	"template/apiserver"
-	"template/apiservices"
+	"signify/apiserver"
+	"signify/apiservices"
 
 	"github.com/eliona-smart-building-assistant/go-utils/common"
 	utilshttp "github.com/eliona-smart-building-assistant/go-utils/http"

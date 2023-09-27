@@ -17,5 +17,5 @@ func TestApp(t *testing.T) {
 func schema(t *testing.T) {
 	t.Parallel()
 
-	assert.SchemaExists(t, "template", []string{ /* insert tables */ })
+	assert.SchemaExists(t, "signify", []string{ /* insert tables */ })
 }

@@ -1,16 +1,16 @@
 {
-  "name": "template",
+  "name": "signify",
   "elionaMinVersion": "v10.1.0",
   "displayName": {
-    "en": "App template",
-    "de": "App Vorlage"
+    "en": "Signify app",
+    "de": "Signify App"
   },
   "description": {
-    "en": "This template can be used to create an app stub for an Eliona environment.",
-    "de": "Diese Vorlage kann verwendet werden um eine App für Eliona zu erstellen."
+    "en": "Provides access to the Signify Interact Lighting API. Control lighting and explore connected lighting options.",
+    "de": "Bietet Zugriff auf die Signify Interact Lighting API. Steuern der Beleuchtung und vernetzen der Beleuchtungsmöglichkeiten."
   },
   "dashboardTemplateNames": [
-    "Template"
+    "Signify"
   ],
   "apiUrl": "v1",
   "apiSpecificationPath": "/version/openapi.json",

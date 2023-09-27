@@ -19,8 +19,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"template/apiserver"
-	"template/conf"
+	"signify/apiserver"
+	"signify/conf"
 )
 
 // ConfigurationApiService is a service that implements the logic for the ConfigurationApiServicer

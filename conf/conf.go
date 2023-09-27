@@ -20,8 +20,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"template/apiserver"
-	"template/appdb"
+	"signify/apiserver"
+	"signify/appdb"
 
 	"github.com/eliona-smart-building-assistant/go-utils/common"
 	"github.com/volatiletech/null/v8"
@@ -80,8 +80,12 @@ func DeleteConfig(ctx context.Context, configID int64) error {
 }
 
 func dbConfigFromApiConfig(apiConfig apiserver.Configuration) (dbConfig appdb.Configuration, err error) {
-	dbConfig.APIAccessChangeMe = apiConfig.ApiAccessChangeMe
-
+	dbConfig.BaseURL = apiConfig.BaseUrl
+	dbConfig.Service = apiConfig.Service
+	dbConfig.ServiceID = apiConfig.ServiceId
+	dbConfig.ServiceSecret = apiConfig.ServiceSecret
+	dbConfig.AppKey = apiConfig.AppKey
+	dbConfig.AppSecret = apiConfig.AppSecret
 	dbConfig.ID = null.Int64FromPtr(apiConfig.Id).Int64
 	dbConfig.Enable = null.BoolFromPtr(apiConfig.Enable)
 	dbConfig.RefreshInterval = apiConfig.RefreshInterval
@@ -102,8 +106,12 @@ func dbConfigFromApiConfig(apiConfig apiserver.Configuration) (dbConfig appdb.Co
 }
 
 func apiConfigFromDbConfig(dbConfig *appdb.Configuration) (apiConfig apiserver.Configuration, err error) {
-	apiConfig.ApiAccessChangeMe = dbConfig.APIAccessChangeMe
-
+	apiConfig.BaseUrl = dbConfig.BaseURL
+	apiConfig.Service = dbConfig.Service
+	apiConfig.ServiceId = dbConfig.ServiceID
+	apiConfig.ServiceSecret = dbConfig.ServiceSecret
+	apiConfig.AppKey = dbConfig.AppKey
+	apiConfig.AppSecret = dbConfig.AppSecret
 	apiConfig.Id = &dbConfig.ID
 	apiConfig.Enable = dbConfig.Enable.Ptr()
 	apiConfig.RefreshInterval = dbConfig.RefreshInterval

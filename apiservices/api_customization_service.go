@@ -18,7 +18,7 @@ package apiservices
 import (
 	"context"
 	"net/http"
-	"template/apiserver"
+	"signify/apiserver"
 )
 
 // CustomizationApiService is a service that implements the logic for the CustomizationApiServicer
