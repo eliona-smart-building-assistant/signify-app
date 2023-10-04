@@ -16,7 +16,7 @@
 package main
 
 import (
-	"signify/eliona"
+	"github.com/eliona-smart-building-assistant/go-eliona/asset"
 	"time"
 
 	"github.com/eliona-smart-building-assistant/go-eliona/app"
@@ -48,12 +48,12 @@ func main() {
 	// Init the app before the first run.
 	app.Init(db.Pool(), app.AppName(),
 		app.ExecSqlFile("conf/init.sql"),
-		eliona.InitEliona,
+		asset.InitAssetTypeFiles("eliona/*-asset-type.json"),
 	)
 
 	// Starting the service to collect the data for this app.
 	common.WaitForWithOs(
-		common.Loop(doAnything, time.Second),
+		common.Loop(collectData, time.Second),
 		listenApi,
 	)
 

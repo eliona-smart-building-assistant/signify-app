@@ -1,0 +1,54 @@
+{
+	"attributes": [
+		{
+			"enable": true,
+			"name": "occupancy",
+			"subtype": "input",
+			"translation": {"de": "Belegung", "en": "since clean"},
+			"aggregationMode": "avg",
+			"aggregationRasters": [
+				"M15","H1","DAY"
+			],
+			"type": "presence"
+		},
+		{
+			"enable": true,
+			"name": "temperature",
+			"subtype": "input",
+			"translation": {
+				"de": "Temperatur",
+				"en": "Temperature"
+			},
+			"unit": "°C",
+			"type": "temperature"
+		},
+		{
+			"enable": true,
+			"name": "humidity",
+			"subtype": "input",
+			"translation": {
+				"de": "Luftfeuchtigkeit",
+				"en": "Humidity"
+			},
+			"unit": "%",
+			"type": "humidity"
+		},
+		{
+			"enable": true,
+			"name": "people_count",
+			"subtype": "input",
+			"translation": {
+				"de": "Personenanzahl",
+				"en": "People count"
+			},
+			"type": "people-count"
+		}
+	],
+	"custom": true,
+	"name": "signify_space",
+	"translation": {
+		"de": "Signify Space",
+		"en": "Signify space"
+	},
+	"vendor": "Signify"
+}

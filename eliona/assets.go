@@ -15,11 +15,36 @@
 
 package eliona
 
+import (
+	"fmt"
+	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
+	"github.com/eliona-smart-building-assistant/go-eliona/asset"
+	"github.com/eliona-smart-building-assistant/go-utils/common"
+)
+
+const SignifySpaceAssetType = "signify_space"
+const SignifyGroupAssetType = "signify_group"
+const SignifyRootAssetType = "signify_root"
+
 type Asset interface {
 	AssetType() string
 	Id() string
 }
 
-//
-// Todo: Define anything for eliona like writing assets or heap data
-//
+func UpsertAsset(projectId string, uniqueIdentifier string, parentId *int32, assetType string, name string) (*int32, error) {
+	assetId, err := asset.UpsertAsset(api.Asset{
+		ProjectId:               projectId,
+		GlobalAssetIdentifier:   uniqueIdentifier,
+		Name:                    *api.NewNullableString(common.Ptr(name)),
+		AssetType:               assetType,
+		Description:             *api.NewNullableString(common.Ptr(fmt.Sprintf("%s (%v)", name, uniqueIdentifier))),
+		ParentLocationalAssetId: *api.NewNullableInt32(parentId),
+		DeviceIds: []string{
+			uniqueIdentifier,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return assetId, nil
+}
