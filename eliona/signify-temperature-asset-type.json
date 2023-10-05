@@ -1,0 +1,22 @@
+{
+	"attributes": [
+		{
+			"enable": true,
+			"name": "temperature",
+			"subtype": "input",
+			"translation": {
+				"de": "Temperatur",
+				"en": "Temperature"
+			},
+			"unit": "°C",
+			"type": "temperature"
+		}
+	],
+	"custom": true,
+	"name": "signify_temperature_space",
+	"translation": {
+		"de": "Signify Temperatur",
+		"en": "Signify temperature"
+	},
+	"vendor": "Signify"
+}

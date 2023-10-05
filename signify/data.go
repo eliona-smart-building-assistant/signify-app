@@ -26,8 +26,15 @@ type Object struct {
 	Name         string `json:"name"`
 	Uuid         string `json:"uuid"`
 	FunctionType string `json:"functionType"`
+	SpaceType    string `json:"spaceType"`
 	Children     []Object
 }
+
+const (
+	OccupancySpaceType   = "occupancy"
+	TemperatureSpaceType = "temperature"
+	HumiditySpaceType    = "humidity"
+)
 
 func fetchData(config apiserver.Configuration, endpoint string) ([]Object, error) {
 	token, err := getBearerToken(config)

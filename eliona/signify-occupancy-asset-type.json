@@ -1,0 +1,23 @@
+{
+	"attributes": [
+		{
+			"enable": true,
+			"name": "occupancy",
+			"subtype": "input",
+			"translation": {"de": "Belegung", "en": "Occupancy"},
+			"type": "presence",
+			"map" : [
+				{"value": -1, "text": "unoccupied"},
+				{"value": 0, "text": "unknown"},
+				{"value": 1, "text": "occupied"}
+			]
+		}
+	],
+	"custom": true,
+	"name": "signify_occupancy_space",
+	"translation": {
+		"de": "Signify Belegung",
+		"en": "Signify occupancy"
+	},
+	"vendor": "Signify"
+}
