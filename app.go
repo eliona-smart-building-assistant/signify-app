@@ -107,37 +107,51 @@ func sendSpaces(config apiserver.Configuration, spaces []signify.Object) error {
 	}
 	for _, projectId := range *config.ProjectIDs {
 
-		rootAssetId, err := createAssetFirstTime(config, projectId, eliona.SignifyRootAssetType, nil, eliona.SignifyRootAssetType, "Signify")
+		rootAssetId, err := createAssetFirstTime(config, projectId, eliona.RootAssetType, nil, eliona.RootAssetType, "Signify")
 		if err != nil {
 			return fmt.Errorf("create root asset first time: %w", err)
 		}
 
 		for _, site := range spaces {
 
-			siteAssetId, err := createAssetFirstTime(config, projectId, site.Uuid, &rootAssetId, eliona.SignifyGroupAssetType, site.Name)
+			siteAssetId, err := createAssetFirstTime(config, projectId, site.Uuid, &rootAssetId, eliona.GroupAssetType, site.Name)
 			if err != nil {
 				return fmt.Errorf("create site asset first time: %w", err)
 			}
 
 			for _, building := range site.Children {
 
-				buildingAssetId, err := createAssetFirstTime(config, projectId, building.Uuid, &siteAssetId, eliona.SignifyGroupAssetType, building.Name)
+				buildingAssetId, err := createAssetFirstTime(config, projectId, building.Uuid, &siteAssetId, eliona.GroupAssetType, building.Name)
 				if err != nil {
 					return fmt.Errorf("create building asset first time: %w", err)
 				}
 
 				for _, storey := range building.Children {
 
-					storeyAssetId, err := createAssetFirstTime(config, projectId, storey.Uuid, &buildingAssetId, eliona.SignifyGroupAssetType, storey.Name)
+					storeyAssetId, err := createAssetFirstTime(config, projectId, storey.Uuid, &buildingAssetId, eliona.GroupAssetType, storey.Name)
 					if err != nil {
 						return fmt.Errorf("create storey asset first time: %w", err)
 					}
 
 					for _, space := range storey.Children {
 
-						_, err := createAssetFirstTime(config, projectId, space.Uuid, &storeyAssetId, eliona.SignifySpaceAssetType, space.Name)
-						if err != nil {
-							return fmt.Errorf("create space asset first time: %w", err)
+						if space.SpaceType == signify.OccupancySpaceType {
+							_, err := createAssetFirstTime(config, projectId, space.Uuid, &storeyAssetId, eliona.OccupancyAssetType, space.Name)
+							if err != nil {
+								return fmt.Errorf("create space asset first time: %w", err)
+							}
+						}
+						if space.SpaceType == signify.TemperatureSpaceType {
+							_, err := createAssetFirstTime(config, projectId, space.Uuid, &storeyAssetId, eliona.TemperatureAssetType, space.Name)
+							if err != nil {
+								return fmt.Errorf("create space asset first time: %w", err)
+							}
+						}
+						if space.SpaceType == signify.HumiditySpaceType {
+							_, err := createAssetFirstTime(config, projectId, space.Uuid, &storeyAssetId, eliona.HumidityAssetType, space.Name)
+							if err != nil {
+								return fmt.Errorf("create space asset first time: %w", err)
+							}
 						}
 
 					}

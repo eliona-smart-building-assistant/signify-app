@@ -1,0 +1,22 @@
+{
+	"attributes": [
+		{
+			"enable": true,
+			"name": "humidity",
+			"subtype": "input",
+			"translation": {
+				"de": "Luftfeuchtigkeit",
+				"en": "Humidity"
+			},
+			"unit": "%",
+			"type": "humidity"
+		}
+	],
+	"custom": true,
+	"name": "signify_humidity_space",
+	"translation": {
+		"de": "Signify Luftfeuchtigkeit",
+		"en": "Signify humidity"
+	},
+	"vendor": "Signify"
+}

@@ -25,5 +25,8 @@ func assetTypes(t *testing.T) {
 	t.Parallel()
 
 	assert.AssetTypeExists(t, "signify_root", []string{})
-	assert.AssetTypeExists(t, "signify_space", []string{})
+	assert.AssetTypeExists(t, "signify_group", []string{})
+	assert.AssetTypeExists(t, "signify_occupancy_space", []string{})
+	assert.AssetTypeExists(t, "signify_temperature_space", []string{})
+	assert.AssetTypeExists(t, "signify_humidity_space", []string{})
 }

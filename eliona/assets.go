@@ -22,9 +22,13 @@ import (
 	"github.com/eliona-smart-building-assistant/go-utils/common"
 )
 
-const SignifySpaceAssetType = "signify_space"
-const SignifyGroupAssetType = "signify_group"
-const SignifyRootAssetType = "signify_root"
+const (
+	HumidityAssetType    = "signify_humidity_space"
+	OccupancyAssetType   = "signify_occupancy_space"
+	TemperatureAssetType = "signify_temperature_space"
+	GroupAssetType       = "signify_group"
+	RootAssetType        = "signify_root"
+)
 
 type Asset interface {
 	AssetType() string
