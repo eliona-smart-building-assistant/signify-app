@@ -19,7 +19,9 @@ import (
 	"fmt"
 	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
 	"github.com/eliona-smart-building-assistant/go-eliona/asset"
+	"github.com/eliona-smart-building-assistant/go-eliona/utils"
 	"github.com/eliona-smart-building-assistant/go-utils/common"
+	"signify/apiserver"
 )
 
 const (
@@ -51,4 +53,31 @@ func UpsertAsset(projectId string, uniqueIdentifier string, parentId *int32, ass
 		return nil, err
 	}
 	return assetId, nil
+}
+
+func AdheresToFilter(input interface{}, filter [][]apiserver.FilterRule) (bool, error) {
+	f := apiFilterToCommonFilter(filter)
+	fp, err := utils.StructToMap(input)
+	if err != nil {
+		return false, fmt.Errorf("converting strict to map: %v", err)
+	}
+	adheres, err := common.Filter(f, fp)
+	if err != nil {
+		return false, err
+	}
+	return adheres, nil
+}
+
+func apiFilterToCommonFilter(input [][]apiserver.FilterRule) [][]common.FilterRule {
+	result := make([][]common.FilterRule, len(input))
+	for i := 0; i < len(input); i++ {
+		result[i] = make([]common.FilterRule, len(input[i]))
+		for j := 0; j < len(input[i]); j++ {
+			result[i][j] = common.FilterRule{
+				Parameter: input[i][j].Parameter,
+				Regex:     input[i][j].Regex,
+			}
+		}
+	}
+	return result
 }
