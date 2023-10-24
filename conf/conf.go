@@ -173,16 +173,28 @@ func SetAllConfigsInactive(ctx context.Context) (int64, error) {
 	})
 }
 
-func InsertAsset(ctx context.Context, config apiserver.Configuration, projId string, globalAssetID string, assetId int32) error {
+type AssetKind string
+
+const (
+	RootAssetKind     AssetKind = "root"
+	SiteAssetKind     AssetKind = "site"
+	BuildingAssetKind AssetKind = "building"
+	StoreyAssetKind   AssetKind = "storey"
+	SpaceAssetKind    AssetKind = "space"
+)
+
+func InsertAsset(ctx context.Context, config apiserver.Configuration, projId string, uuid string, globalAssetID string, kind AssetKind, assetId int32) error {
 	var dbAsset appdb.Asset
 	dbAsset.ConfigurationID = null.Int64FromPtr(config.Id).Int64
 	dbAsset.ProjectID = projId
+	dbAsset.UUID = uuid
+	dbAsset.Kind = string(kind)
 	dbAsset.GlobalAssetID = globalAssetID
 	dbAsset.AssetID = null.Int32From(assetId)
 	return dbAsset.InsertG(ctx, boil.Infer())
 }
 
-func GetAssetId(ctx context.Context, config apiserver.Configuration, projId string, globalAssetID string) (*int32, error) {
+func GetAssetIdWithGAI(ctx context.Context, config apiserver.Configuration, projId string, globalAssetID string) (*int32, error) {
 	dbAsset, err := appdb.Assets(
 		appdb.AssetWhere.ConfigurationID.EQ(null.Int64FromPtr(config.Id).Int64),
 		appdb.AssetWhere.ProjectID.EQ(projId),
@@ -192,4 +204,18 @@ func GetAssetId(ctx context.Context, config apiserver.Configuration, projId stri
 		return nil, err
 	}
 	return common.Ptr(dbAsset[0].AssetID.Int32), nil
+}
+
+func GetAssetsWithUUID(ctx context.Context, config apiserver.Configuration, uuid string) ([]*appdb.Asset, error) {
+	return appdb.Assets(
+		appdb.AssetWhere.ConfigurationID.EQ(null.Int64FromPtr(config.Id).Int64),
+		appdb.AssetWhere.UUID.EQ(uuid),
+	).AllG(ctx)
+}
+
+func GetAssetsWithAssetKind(ctx context.Context, config apiserver.Configuration, kind AssetKind) ([]*appdb.Asset, error) {
+	return appdb.Assets(
+		appdb.AssetWhere.ConfigurationID.EQ(null.Int64FromPtr(config.Id).Int64),
+		appdb.AssetWhere.Kind.EQ(string(kind)),
+	).AllG(ctx)
 }

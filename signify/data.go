@@ -17,35 +17,77 @@ package signify
 
 import (
 	"fmt"
+	"github.com/eliona-smart-building-assistant/go-utils/common"
 	utilshttp "github.com/eliona-smart-building-assistant/go-utils/http"
+	"github.com/eliona-smart-building-assistant/go-utils/log"
+	"github.com/gorilla/websocket"
 	"signify/apiserver"
 	"signify/eliona"
 	"time"
 )
 
 type Object struct {
-	ObjectType   string `eliona:"object_type,filterable"`
-	Name         string `json:"name" eliona:"name,filterable"`
-	Uuid         string `json:"uuid" eliona:"uuid,filterable"`
-	FunctionType string `json:"functionType" eliona:"function_type,filterable"`
-	SpaceType    string `json:"spaceType" eliona:"space_type,filterable"`
+	ObjectType   ObjectType `eliona:"object_type,filterable"`
+	Name         string     `json:"name" eliona:"name,filterable"`
+	Uuid         string     `json:"uuid" eliona:"uuid,filterable"`
+	FunctionType string     `json:"functionType" eliona:"function_type,filterable"`
+	SpaceType    string     `json:"spaceType" eliona:"space_type,filterable"`
 	Children     []Object
 }
 
 const (
 	OccupancySpaceType   = "occupancy"
+	PeopleCountSpaceType = "peoplecount"
 	TemperatureSpaceType = "temperature"
 	HumiditySpaceType    = "humidity"
 )
 
+type ObjectType string
+
 const (
-	SiteObjectType     = "site"
-	BuildingObjectType = "building"
-	StoreyObjectType   = "storey"
-	SpaceObjectType    = "space"
+	SiteObjectType     ObjectType = "site"
+	BuildingObjectType ObjectType = "building"
+	StoreyObjectType   ObjectType = "storey"
+	SpaceObjectType    ObjectType = "space"
 )
 
-func fetchObjects(config apiserver.Configuration, endpoint string, objectType string) ([]Object, error) {
+type OccupancyState string
+
+const (
+	OccupiedOccupancyState   OccupancyState = "occupied"
+	UnoccupiedOccupancyState OccupancyState = "unoccupied"
+	UnknownOccupancyState    OccupancyState = "unknown"
+)
+
+type SubscriptionType string
+
+const (
+	OccupancySubscriptionType   SubscriptionType = "OCCUPANCY"
+	HumiditySubscriptionType    SubscriptionType = "HUMIDITY"
+	TemperatureSubscriptionType SubscriptionType = "TEMPERATURE"
+	PeopleCountSubscriptionType SubscriptionType = "PEOPLE_COUNT"
+)
+
+type Message struct {
+	SpaceId        string          `json:"spaceId"`
+	Timestamp      int64           `json:"timestamp"`
+	Count          *int            `json:"count" eliona:"people_count" subtype:"input"`
+	Temperature    *int            `json:"temperature" eliona:"temperature" subtype:"input"`
+	Humidity       *int            `json:"humidity" eliona:"humidity" subtype:"input"`
+	Unit           *string         `json:"unit"`
+	OccupancyState *OccupancyState `json:"occupancy"`
+	Occupancy      *int            `json:"-" eliona:"occupancy" subtype:"input"`
+}
+
+type WebsocketUrl struct {
+	Url       *string `json:"websocketUrl"`
+	Timestamp int64   `json:"timestamp"`
+	Errors    any     `json:"errors"`
+}
+
+var subscriptions []*websocket.Conn
+
+func fetchObjects(config apiserver.Configuration, endpoint string, objectType ObjectType) ([]Object, error) {
 	token, err := getBearerToken(config)
 	if err != nil {
 		return nil, err
@@ -91,4 +133,68 @@ func GetStoreys(config apiserver.Configuration, building Object) ([]Object, erro
 
 func GetSensorSpaces(config apiserver.Configuration, storey Object) ([]Object, error) {
 	return fetchObjects(config, "/interact/api/officeCloud/v1/buildingStoreys/"+storey.Uuid+"/sensorSpaces", SpaceObjectType)
+}
+
+func Subscribe(url string, messageHandler func(message Message)) {
+	// create channel for messages
+	messages := make(chan Message)
+
+	// start listening
+	go utilshttp.ListenWebSocketWithReconnect(subscriptionCreator(url), time.Second, messages)
+	go func() {
+		log.Debug("Listening", "Start listening on: %s", url)
+		for message := range messages {
+			log.Debug("Listening", "New message from %s: %v", url, message)
+			if message.OccupancyState != nil {
+				switch *message.OccupancyState {
+				case OccupiedOccupancyState:
+					message.Occupancy = common.Ptr(1)
+				case UnoccupiedOccupancyState:
+					message.Occupancy = common.Ptr(-1)
+				case UnknownOccupancyState:
+					message.Occupancy = common.Ptr(0)
+				}
+			}
+			messageHandler(message)
+		}
+		log.Info("Listening", "Stop listening on %s", url)
+	}()
+}
+
+func subscriptionCreator(url string) func() (*websocket.Conn, error) {
+	return func() (*websocket.Conn, error) {
+		subscription, err := utilshttp.NewWebSocketConnectionWithApiKey(url, "", "")
+		subscriptions = append(subscriptions, subscription)
+		return subscription, err
+	}
+}
+
+func CloseExistingSubscriptions() {
+	for _, subscription := range subscriptions {
+		if subscription != nil {
+			_ = subscription.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			_ = subscription.Close()
+		}
+	}
+}
+
+func GetSubscriptionUrl(config apiserver.Configuration, buildingUUID string, subscriptionType SubscriptionType) (*string, error) {
+	token, err := getBearerToken(config)
+	if err != nil {
+		return nil, err
+	}
+	endpoint := "/interact/api/officeCloud/v1/subscription/" + buildingUUID + "/" + string(subscriptionType)
+	request, err := utilshttp.NewRequestWithBearer(config.BaseUrl+endpoint, token.Token)
+	if err != nil {
+		return nil, fmt.Errorf("request %s: %w", endpoint, err)
+	}
+
+	websocketUrl, err := utilshttp.Read[WebsocketUrl](request, time.Duration(*config.RequestTimeout)*time.Second, true)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", endpoint, err)
+	}
+	if websocketUrl.Url == nil {
+		return nil, fmt.Errorf("read %s: %v", endpoint, websocketUrl.Errors)
+	}
+	return websocketUrl.Url, nil
 }

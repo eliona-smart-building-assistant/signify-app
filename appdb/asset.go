@@ -25,6 +25,8 @@ import (
 // Asset is an object representing the database table.
 type Asset struct {
 	ID              int64      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Kind            string     `boil:"kind" json:"kind" toml:"kind" yaml:"kind"`
+	UUID            string     `boil:"uuid" json:"uuid" toml:"uuid" yaml:"uuid"`
 	ConfigurationID int64      `boil:"configuration_id" json:"configuration_id" toml:"configuration_id" yaml:"configuration_id"`
 	ProjectID       string     `boil:"project_id" json:"project_id" toml:"project_id" yaml:"project_id"`
 	GlobalAssetID   string     `boil:"global_asset_id" json:"global_asset_id" toml:"global_asset_id" yaml:"global_asset_id"`
@@ -36,12 +38,16 @@ type Asset struct {
 
 var AssetColumns = struct {
 	ID              string
+	Kind            string
+	UUID            string
 	ConfigurationID string
 	ProjectID       string
 	GlobalAssetID   string
 	AssetID         string
 }{
 	ID:              "id",
+	Kind:            "kind",
+	UUID:            "uuid",
 	ConfigurationID: "configuration_id",
 	ProjectID:       "project_id",
 	GlobalAssetID:   "global_asset_id",
@@ -50,12 +56,16 @@ var AssetColumns = struct {
 
 var AssetTableColumns = struct {
 	ID              string
+	Kind            string
+	UUID            string
 	ConfigurationID string
 	ProjectID       string
 	GlobalAssetID   string
 	AssetID         string
 }{
 	ID:              "asset.id",
+	Kind:            "asset.kind",
+	UUID:            "asset.uuid",
 	ConfigurationID: "asset.configuration_id",
 	ProjectID:       "asset.project_id",
 	GlobalAssetID:   "asset.global_asset_id",
@@ -154,12 +164,16 @@ func (w whereHelpernull_Int32) IsNotNull() qm.QueryMod { return qmhelper.WhereIs
 
 var AssetWhere = struct {
 	ID              whereHelperint64
+	Kind            whereHelperstring
+	UUID            whereHelperstring
 	ConfigurationID whereHelperint64
 	ProjectID       whereHelperstring
 	GlobalAssetID   whereHelperstring
 	AssetID         whereHelpernull_Int32
 }{
 	ID:              whereHelperint64{field: "\"signify\".\"asset\".\"id\""},
+	Kind:            whereHelperstring{field: "\"signify\".\"asset\".\"kind\""},
+	UUID:            whereHelperstring{field: "\"signify\".\"asset\".\"uuid\""},
 	ConfigurationID: whereHelperint64{field: "\"signify\".\"asset\".\"configuration_id\""},
 	ProjectID:       whereHelperstring{field: "\"signify\".\"asset\".\"project_id\""},
 	GlobalAssetID:   whereHelperstring{field: "\"signify\".\"asset\".\"global_asset_id\""},
@@ -194,8 +208,8 @@ func (r *assetR) GetConfiguration() *Configuration {
 type assetL struct{}
 
 var (
-	assetAllColumns            = []string{"id", "configuration_id", "project_id", "global_asset_id", "asset_id"}
-	assetColumnsWithoutDefault = []string{"project_id", "global_asset_id"}
+	assetAllColumns            = []string{"id", "kind", "uuid", "configuration_id", "project_id", "global_asset_id", "asset_id"}
+	assetColumnsWithoutDefault = []string{"kind", "uuid", "project_id", "global_asset_id"}
 	assetColumnsWithDefault    = []string{"id", "configuration_id", "asset_id"}
 	assetPrimaryKeyColumns     = []string{"id"}
 	assetGeneratedColumns      = []string{}

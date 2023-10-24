@@ -1,0 +1,18 @@
+{
+	"attributes": [
+		{
+			"enable": true,
+			"name": "people_count",
+			"subtype": "input",
+			"translation": {"de": "Personenanzahl", "en": "people count"},
+			"type": "presence"
+		}
+	],
+	"custom": true,
+	"name": "signify_people_count_space",
+	"translation": {
+		"de": "Signify Personenanzahl",
+		"en": "Signify people count"
+	},
+	"vendor": "Signify"
+}
