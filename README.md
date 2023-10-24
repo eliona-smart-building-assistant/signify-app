@@ -73,6 +73,9 @@ Possible filter parameters are defined in the structs in `broker.go` and marked 
 
 To avoid conflicts, the Global Asset Identifier is a manufacturer's ID prefixed with asset type name as a namespace.
 
+
+[[{"parameter":  "name", "regex": ".*Pow.*"}], [{"parameter":  "object_type", "regex": "(site|building|storey)"}]]
+
 ### Dashboard ###
 
 An example dashboard meant for a quick start or showcasing the apps abilities can be obtained by accessing the dashboard endpoint defined in the `openapi.yaml` file.

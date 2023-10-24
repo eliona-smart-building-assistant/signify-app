@@ -32,7 +32,7 @@ type BearerToken struct {
 
 func getBearerToken(config apiserver.Configuration) (*BearerToken, error) {
 	if bearerTokenValid(config) {
-		log.Debug("auth", "reuse bearer bearerToken: %.10s...", bearerTokens[*config.Id].Token)
+		log.Debug("auth", "Reuse bearer bearerToken: %.10s...", bearerTokens[*config.Id].Token)
 		return bearerTokens[*config.Id], nil
 	}
 	request, err := utilshttp.NewPostFormRequestWithBasicAuth(config.BaseUrl+"/oauth/accesstoken", map[string][]string{
@@ -52,7 +52,7 @@ func getBearerToken(config apiserver.Configuration) (*BearerToken, error) {
 	}
 	token.Issued = time.Now().Unix()
 	bearerTokens[*config.Id] = &token
-	log.Debug("auth", "created new bearerToken: %.10s...", token.Token)
+	log.Debug("auth", "Created new bearerToken: %.10s...", token.Token)
 	return &token, nil
 }
 

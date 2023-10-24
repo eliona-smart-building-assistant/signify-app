@@ -27,6 +27,7 @@ import (
 const (
 	HumidityAssetType    = "signify_humidity_space"
 	OccupancyAssetType   = "signify_occupancy_space"
+	PeopleCountAssetType = "signify_people_count_space"
 	TemperatureAssetType = "signify_temperature_space"
 	GroupAssetType       = "signify_group"
 	RootAssetType        = "signify_root"

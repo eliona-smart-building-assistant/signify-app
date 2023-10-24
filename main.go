@@ -51,9 +51,12 @@ func main() {
 		asset.InitAssetTypeFiles("eliona/*-asset-type.json"),
 	)
 
+	// Start listening for data
+	subscribeData()
+
 	// Starting the service to collect the data for this app.
 	common.WaitForWithOs(
-		common.Loop(collectData, time.Second),
+		common.Loop(collectAssets, time.Second),
 		listenApi,
 	)
 
