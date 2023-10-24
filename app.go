@@ -38,7 +38,6 @@ func collectData() {
 		return
 	}
 	if len(configs) == 0 {
-		log.Info("conf", "no configs in DB")
 		return
 	}
 
