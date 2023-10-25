@@ -19,6 +19,7 @@ import (
 	"context"
 	"net/http"
 	"signify/apiserver"
+	"signify/eliona"
 )
 
 // CustomizationApiService is a service that implements the logic for the CustomizationApiServicer
@@ -34,8 +35,30 @@ func NewCustomizationApiService() apiserver.CustomizationAPIServicer {
 
 // GetDashboardTemplateByName - Get a full dashboard template
 func (s *CustomizationApiService) GetDashboardTemplateByName(ctx context.Context, dashboardTemplateName string, projectId string) (apiserver.ImplResponse, error) {
-	if dashboardTemplateName == "Template" {
-		return apiserver.ImplResponse{Code: http.StatusNotImplemented}, nil
+	if dashboardTemplateName == "Signify People Count" {
+		dashboard, err := eliona.SignifyPeopleCountDashboard(projectId)
+		if err != nil {
+			return apiserver.ImplResponse{Code: http.StatusInternalServerError}, err
+		}
+		return apiserver.Response(http.StatusOK, dashboard), nil
+	} else if dashboardTemplateName == "Signify Occupancy" {
+		dashboard, err := eliona.SignifyOccupancyDashboard(projectId)
+		if err != nil {
+			return apiserver.ImplResponse{Code: http.StatusInternalServerError}, err
+		}
+		return apiserver.Response(http.StatusOK, dashboard), nil
+	} else if dashboardTemplateName == "Signify Temperature" {
+		dashboard, err := eliona.SignifyTemperatureDashboard(projectId)
+		if err != nil {
+			return apiserver.ImplResponse{Code: http.StatusInternalServerError}, err
+		}
+		return apiserver.Response(http.StatusOK, dashboard), nil
+	} else if dashboardTemplateName == "Signify Humidity" {
+		dashboard, err := eliona.SignifyHumidityDashboard(projectId)
+		if err != nil {
+			return apiserver.ImplResponse{Code: http.StatusInternalServerError}, err
+		}
+		return apiserver.Response(http.StatusOK, dashboard), nil
 	} else {
 		return apiserver.ImplResponse{Code: http.StatusNotFound}, nil
 	}

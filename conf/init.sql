@@ -37,7 +37,8 @@ create table if not exists signify.asset
 (
 	id               bigserial primary key,
 	kind             text      not null,
-	uuid             text      not null,
+    uuid             text      not null,
+    parent_uuid      text      null,
 	configuration_id bigserial not null references signify.configuration(id),
 	project_id       text      not null,
 	global_asset_id  text      not null,

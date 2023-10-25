@@ -2,15 +2,18 @@
   "name": "signify",
   "elionaMinVersion": "v10.1.0",
   "displayName": {
-    "en": "Signify app",
-    "de": "Signify App"
+    "en": "Signify",
+    "de": "Signify"
   },
   "description": {
     "en": "Provides access to the Signify Interact Lighting API. Control lighting and explore connected lighting options.",
     "de": "Bietet Zugriff auf die Signify Interact Lighting API. Steuern der Beleuchtung und vernetzen der Beleuchtungsmöglichkeiten."
   },
   "dashboardTemplateNames": [
-    "Signify"
+    "Signify People Count",
+    "Signify Occupancy",
+    "Signify Temperature",
+    "Signify Humidity"
   ],
   "apiUrl": "v1",
   "apiSpecificationPath": "/version/openapi.json",
