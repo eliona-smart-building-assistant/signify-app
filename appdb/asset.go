@@ -24,13 +24,14 @@ import (
 
 // Asset is an object representing the database table.
 type Asset struct {
-	ID              int64      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Kind            string     `boil:"kind" json:"kind" toml:"kind" yaml:"kind"`
-	UUID            string     `boil:"uuid" json:"uuid" toml:"uuid" yaml:"uuid"`
-	ConfigurationID int64      `boil:"configuration_id" json:"configuration_id" toml:"configuration_id" yaml:"configuration_id"`
-	ProjectID       string     `boil:"project_id" json:"project_id" toml:"project_id" yaml:"project_id"`
-	GlobalAssetID   string     `boil:"global_asset_id" json:"global_asset_id" toml:"global_asset_id" yaml:"global_asset_id"`
-	AssetID         null.Int32 `boil:"asset_id" json:"asset_id,omitempty" toml:"asset_id" yaml:"asset_id,omitempty"`
+	ID              int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Kind            string      `boil:"kind" json:"kind" toml:"kind" yaml:"kind"`
+	UUID            string      `boil:"uuid" json:"uuid" toml:"uuid" yaml:"uuid"`
+	ParentUUID      null.String `boil:"parent_uuid" json:"parent_uuid,omitempty" toml:"parent_uuid" yaml:"parent_uuid,omitempty"`
+	ConfigurationID int64       `boil:"configuration_id" json:"configuration_id" toml:"configuration_id" yaml:"configuration_id"`
+	ProjectID       string      `boil:"project_id" json:"project_id" toml:"project_id" yaml:"project_id"`
+	GlobalAssetID   string      `boil:"global_asset_id" json:"global_asset_id" toml:"global_asset_id" yaml:"global_asset_id"`
+	AssetID         null.Int32  `boil:"asset_id" json:"asset_id,omitempty" toml:"asset_id" yaml:"asset_id,omitempty"`
 
 	R *assetR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L assetL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -40,6 +41,7 @@ var AssetColumns = struct {
 	ID              string
 	Kind            string
 	UUID            string
+	ParentUUID      string
 	ConfigurationID string
 	ProjectID       string
 	GlobalAssetID   string
@@ -48,6 +50,7 @@ var AssetColumns = struct {
 	ID:              "id",
 	Kind:            "kind",
 	UUID:            "uuid",
+	ParentUUID:      "parent_uuid",
 	ConfigurationID: "configuration_id",
 	ProjectID:       "project_id",
 	GlobalAssetID:   "global_asset_id",
@@ -58,6 +61,7 @@ var AssetTableColumns = struct {
 	ID              string
 	Kind            string
 	UUID            string
+	ParentUUID      string
 	ConfigurationID string
 	ProjectID       string
 	GlobalAssetID   string
@@ -66,6 +70,7 @@ var AssetTableColumns = struct {
 	ID:              "asset.id",
 	Kind:            "asset.kind",
 	UUID:            "asset.uuid",
+	ParentUUID:      "asset.parent_uuid",
 	ConfigurationID: "asset.configuration_id",
 	ProjectID:       "asset.project_id",
 	GlobalAssetID:   "asset.global_asset_id",
@@ -124,6 +129,56 @@ func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
+type whereHelpernull_String struct{ field string }
+
+func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_String) LIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" LIKE ?", x)
+}
+func (w whereHelpernull_String) NLIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" NOT LIKE ?", x)
+}
+func (w whereHelpernull_String) ILIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" ILIKE ?", x)
+}
+func (w whereHelpernull_String) NILIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" NOT ILIKE ?", x)
+}
+func (w whereHelpernull_String) IN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 type whereHelpernull_Int32 struct{ field string }
 
 func (w whereHelpernull_Int32) EQ(x null.Int32) qm.QueryMod {
@@ -166,6 +221,7 @@ var AssetWhere = struct {
 	ID              whereHelperint64
 	Kind            whereHelperstring
 	UUID            whereHelperstring
+	ParentUUID      whereHelpernull_String
 	ConfigurationID whereHelperint64
 	ProjectID       whereHelperstring
 	GlobalAssetID   whereHelperstring
@@ -174,6 +230,7 @@ var AssetWhere = struct {
 	ID:              whereHelperint64{field: "\"signify\".\"asset\".\"id\""},
 	Kind:            whereHelperstring{field: "\"signify\".\"asset\".\"kind\""},
 	UUID:            whereHelperstring{field: "\"signify\".\"asset\".\"uuid\""},
+	ParentUUID:      whereHelpernull_String{field: "\"signify\".\"asset\".\"parent_uuid\""},
 	ConfigurationID: whereHelperint64{field: "\"signify\".\"asset\".\"configuration_id\""},
 	ProjectID:       whereHelperstring{field: "\"signify\".\"asset\".\"project_id\""},
 	GlobalAssetID:   whereHelperstring{field: "\"signify\".\"asset\".\"global_asset_id\""},
@@ -208,9 +265,9 @@ func (r *assetR) GetConfiguration() *Configuration {
 type assetL struct{}
 
 var (
-	assetAllColumns            = []string{"id", "kind", "uuid", "configuration_id", "project_id", "global_asset_id", "asset_id"}
+	assetAllColumns            = []string{"id", "kind", "uuid", "parent_uuid", "configuration_id", "project_id", "global_asset_id", "asset_id"}
 	assetColumnsWithoutDefault = []string{"kind", "uuid", "project_id", "global_asset_id"}
-	assetColumnsWithDefault    = []string{"id", "configuration_id", "asset_id"}
+	assetColumnsWithDefault    = []string{"id", "parent_uuid", "configuration_id", "asset_id"}
 	assetPrimaryKeyColumns     = []string{"id"}
 	assetGeneratedColumns      = []string{}
 )

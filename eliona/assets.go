@@ -19,6 +19,7 @@ import (
 	"fmt"
 	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
 	"github.com/eliona-smart-building-assistant/go-eliona/asset"
+	"github.com/eliona-smart-building-assistant/go-eliona/client"
 	"github.com/eliona-smart-building-assistant/go-eliona/utils"
 	"github.com/eliona-smart-building-assistant/go-utils/common"
 	"signify/apiserver"
@@ -54,6 +55,15 @@ func UpsertAsset(projectId string, uniqueIdentifier string, parentId *int32, ass
 		return nil, err
 	}
 	return assetId, nil
+}
+
+func getAssetById(assetId int32) (*api.Asset, error) {
+	apiAsset, _, err := client.NewClient().AssetsAPI.
+		GetAssetById(client.AuthenticationContext(), assetId).Execute()
+	if err != nil {
+		return nil, err
+	}
+	return apiAsset, nil
 }
 
 func AdheresToFilter(input interface{}, filter [][]apiserver.FilterRule) (bool, error) {

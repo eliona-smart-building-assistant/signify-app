@@ -163,6 +163,7 @@ func Subscribe(url string, messageHandler func(message Message)) {
 
 func subscriptionCreator(url string) func() (*websocket.Conn, error) {
 	return func() (*websocket.Conn, error) {
+		log.Info("Listening", "Create subscription for %s", url)
 		subscription, err := utilshttp.NewWebSocketConnectionWithApiKey(url, "", "")
 		subscriptions = append(subscriptions, subscription)
 		return subscription, err
@@ -173,7 +174,6 @@ func CloseExistingSubscriptions() {
 	for _, subscription := range subscriptions {
 		if subscription != nil {
 			_ = subscription.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-			_ = subscription.Close()
 		}
 	}
 }

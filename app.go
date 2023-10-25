@@ -18,9 +18,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/volatiletech/null/v8"
 	"net/http"
 	"signify/apiserver"
 	"signify/apiservices"
+	"signify/appdb"
 	"signify/conf"
 	"signify/eliona"
 	"signify/signify"
@@ -78,7 +80,7 @@ func collectAssets() {
 		}
 
 		common.RunOnceWithParam(func(config apiserver.Configuration) {
-			log.Info("main", "Collecting for configuration id %d started", *config.Id)
+			log.Info("main", "Start collecting for configuration id %d", *config.Id)
 
 			spaces, err := collectObjects(config)
 			if err != nil {
@@ -91,7 +93,7 @@ func collectAssets() {
 				log.Error("send", "Error sending assets: %v", err)
 				return
 			}
-			log.Info("main", "Collecting for configuration id %d successful finished", *config.Id)
+			log.Info("main", "Finished collecting for configuration id %d successfully", *config.Id)
 
 			if anyCreated {
 				log.Info("main", "Cancel existing subscriptions and resubscribe all")
@@ -115,7 +117,7 @@ func createAssets(config apiserver.Configuration, spaces []signify.Object) (bool
 	var anyCreated = false
 	for _, projectId := range *config.ProjectIDs {
 
-		rootAssetId, created, err := createAsset(config, projectId, eliona.RootAssetType, nil, eliona.RootAssetType, conf.RootAssetKind, "Signify")
+		rootAssetId, created, err := createAsset(config, projectId, eliona.RootAssetType, nil, nil, eliona.RootAssetType, conf.RootAssetKind, "Signify")
 		if err != nil {
 			return anyCreated, fmt.Errorf("create root asset first time: %w", err)
 		}
@@ -123,7 +125,7 @@ func createAssets(config apiserver.Configuration, spaces []signify.Object) (bool
 
 		for _, site := range spaces {
 
-			siteAssetId, created, err := createAsset(config, projectId, site.Uuid, &rootAssetId, eliona.GroupAssetType, conf.SiteAssetKind, site.Name)
+			siteAssetId, created, err := createAsset(config, projectId, site.Uuid, nil, &rootAssetId, eliona.GroupAssetType, conf.SiteAssetKind, site.Name)
 			if err != nil {
 				return anyCreated, fmt.Errorf("create site asset first time: %w", err)
 			}
@@ -131,7 +133,7 @@ func createAssets(config apiserver.Configuration, spaces []signify.Object) (bool
 
 			for _, building := range site.Children {
 
-				buildingAssetId, created, err := createAsset(config, projectId, building.Uuid, &siteAssetId, eliona.GroupAssetType, conf.BuildingAssetKind, building.Name)
+				buildingAssetId, created, err := createAsset(config, projectId, building.Uuid, common.Ptr(site.Uuid), &siteAssetId, eliona.GroupAssetType, conf.BuildingAssetKind, building.Name)
 				if err != nil {
 					return anyCreated, fmt.Errorf("create building asset first time: %w", err)
 				}
@@ -139,7 +141,7 @@ func createAssets(config apiserver.Configuration, spaces []signify.Object) (bool
 
 				for _, storey := range building.Children {
 
-					storeyAssetId, created, err := createAsset(config, projectId, storey.Uuid, &buildingAssetId, eliona.GroupAssetType, conf.StoreyAssetKind, storey.Name)
+					storeyAssetId, created, err := createAsset(config, projectId, storey.Uuid, common.Ptr(building.Uuid), &buildingAssetId, eliona.GroupAssetType, conf.StoreyAssetKind, storey.Name)
 					if err != nil {
 						return anyCreated, fmt.Errorf("create storey asset first time: %w", err)
 					}
@@ -148,28 +150,28 @@ func createAssets(config apiserver.Configuration, spaces []signify.Object) (bool
 					for _, space := range storey.Children {
 
 						if space.SpaceType == signify.OccupancySpaceType {
-							_, created, err := createAsset(config, projectId, space.Uuid, &storeyAssetId, eliona.OccupancyAssetType, conf.SpaceAssetKind, space.Name)
+							_, created, err := createAsset(config, projectId, space.Uuid, common.Ptr(storey.Uuid), &storeyAssetId, eliona.OccupancyAssetType, conf.SpaceAssetKind, space.Name)
 							if err != nil {
 								return anyCreated, fmt.Errorf("create space asset first time: %w", err)
 							}
 							anyCreated = anyCreated || created
 						}
 						if space.SpaceType == signify.PeopleCountSpaceType {
-							_, created, err := createAsset(config, projectId, space.Uuid, &storeyAssetId, eliona.PeopleCountAssetType, conf.SpaceAssetKind, space.Name)
+							_, created, err := createAsset(config, projectId, space.Uuid, common.Ptr(storey.Uuid), &storeyAssetId, eliona.PeopleCountAssetType, conf.SpaceAssetKind, space.Name)
 							if err != nil {
 								return anyCreated, fmt.Errorf("create space asset first time: %w", err)
 							}
 							anyCreated = anyCreated || created
 						}
 						if space.SpaceType == signify.TemperatureSpaceType {
-							_, created, err := createAsset(config, projectId, space.Uuid, &storeyAssetId, eliona.TemperatureAssetType, conf.SpaceAssetKind, space.Name)
+							_, created, err := createAsset(config, projectId, space.Uuid, common.Ptr(storey.Uuid), &storeyAssetId, eliona.TemperatureAssetType, conf.SpaceAssetKind, space.Name)
 							if err != nil {
 								return anyCreated, fmt.Errorf("create space asset first time: %w", err)
 							}
 							anyCreated = anyCreated || created
 						}
 						if space.SpaceType == signify.HumiditySpaceType {
-							_, created, err := createAsset(config, projectId, space.Uuid, &storeyAssetId, eliona.HumidityAssetType, conf.SpaceAssetKind, space.Name)
+							_, created, err := createAsset(config, projectId, space.Uuid, common.Ptr(storey.Uuid), &storeyAssetId, eliona.HumidityAssetType, conf.SpaceAssetKind, space.Name)
 							if err != nil {
 								return anyCreated, fmt.Errorf("create space asset first time: %w", err)
 							}
@@ -230,7 +232,7 @@ func collectObjects(config apiserver.Configuration) ([]signify.Object, error) {
 }
 
 // createAsset creates an asset if not exists. otherwise the current asset id is returned.
-func createAsset(config apiserver.Configuration, projectId string, identifier string, parentId *int32, assetType string, kind conf.AssetKind, name string) (int32, bool, error) {
+func createAsset(config apiserver.Configuration, projectId string, identifier string, parentIdentifier *string, parentId *int32, assetType string, kind conf.AssetKind, name string) (int32, bool, error) {
 	uniqueIdentifier := assetType + "_" + identifier
 	ctx := context.Background()
 
@@ -249,7 +251,7 @@ func createAsset(config apiserver.Configuration, projectId string, identifier st
 			return 0, false, fmt.Errorf("upserting root asset %s in Eliona: %w", uniqueIdentifier, err)
 		}
 
-		err = conf.InsertAsset(ctx, config, projectId, identifier, uniqueIdentifier, kind, *assetId)
+		err = conf.InsertAsset(ctx, config, projectId, identifier, parentIdentifier, uniqueIdentifier, kind, *assetId)
 		if err != nil {
 			return 0, false, fmt.Errorf("insert asset %s in app: %w", uniqueIdentifier, err)
 		}
@@ -290,9 +292,12 @@ func subscribeData() {
 			continue
 		}
 
-		log.Info("main", "Subscribing new data for configuration id %d", *config.Id)
+		log.Info("main", "Start subscribing new data for configuration id %d", *config.Id)
 
-		buildings, err := conf.GetAssetsWithAssetKind(context.Background(), config, conf.BuildingAssetKind)
+		buildings, err := conf.GetAssets(context.Background(),
+			appdb.AssetWhere.ConfigurationID.EQ(null.Int64FromPtr(config.Id).Int64),
+			appdb.AssetWhere.Kind.EQ(string(conf.BuildingAssetKind)),
+		)
 		if err != nil {
 			log.Fatal("listening", "Error collect buildings: %v", err)
 			return
@@ -310,12 +315,17 @@ func subscribeData() {
 				})
 			}
 		}
+
+		log.Info("main", "Finished subscribing new data for configuration id %d successfully", *config.Id)
 	}
 }
 
 // upsertData upsert data
 func upsertData(message signify.Message, config apiserver.Configuration) {
-	spaces, err := conf.GetAssetsWithUUID(context.Background(), config, message.SpaceId)
+	spaces, err := conf.GetAssets(context.Background(),
+		appdb.AssetWhere.ConfigurationID.EQ(null.Int64FromPtr(config.Id).Int64),
+		appdb.AssetWhere.UUID.EQ(message.SpaceId),
+	)
 	if err != nil {
 		log.Fatal("data", "Error getting assets with UUID %s: %v", message.SpaceId, err)
 	}

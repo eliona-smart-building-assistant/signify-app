@@ -6,13 +6,14 @@ no-tests = true
 add-enum-types = true
 
 [psql]
-dbname = "postgres"
-host   = "localhost"
-port   = 5432
-user   = "postgres"
-pass   = "secret"
-schema = "template"
+dbname = "iot"
+host   = "65.109.128.168"
+port   = 31432
+user   = "leicom"
+pass   = "h2WGqWQ4"
+schema = "signify"
 sslmode = "disable"
+
 
 [[types]]
 [types.match]

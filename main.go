@@ -52,7 +52,7 @@ func main() {
 	)
 
 	// Start listening for data
-	subscribeData()
+	go subscribeData()
 
 	// Starting the service to collect the data for this app.
 	common.WaitForWithOs(
