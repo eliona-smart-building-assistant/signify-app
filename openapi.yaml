@@ -176,7 +176,11 @@ paths:
           required: true
           schema:
             type: string
-            example: Template
+            example:
+              Signify People Count
+              Signify Occupancy
+              Signify Temperature
+              Signify Humidity
         - name: projectId
           in: query
           description: Define the project the dashboard should be
