@@ -32,7 +32,7 @@ func SignifyPeopleCountDashboard(projectId string) (api.Dashboard, error) {
 
 	storeys, err := conf.GetAssets(context.Background(),
 		appdb.AssetWhere.Kind.EQ(string(conf.StoreyAssetKind)),
-		//		appdb.AssetWhere.ProjectID.EQ(projectId),
+		appdb.AssetWhere.ProjectID.EQ(projectId),
 	)
 	if err != nil {
 		return api.Dashboard{}, err
@@ -62,7 +62,7 @@ func SignifyPeopleCountDashboard(projectId string) (api.Dashboard, error) {
 		spaces, err := conf.GetAssets(context.Background(),
 			appdb.AssetWhere.ParentUUID.EQ(null.StringFrom(storey.UUID)),
 			appdb.AssetWhere.Kind.EQ(string(conf.SpaceAssetKind)),
-			//			appdb.AssetWhere.ProjectID.EQ(projectId),
+			appdb.AssetWhere.ProjectID.EQ(projectId),
 		)
 		if err != nil {
 			return api.Dashboard{}, err
@@ -113,7 +113,7 @@ func SignifyOccupancyDashboard(projectId string) (api.Dashboard, error) {
 
 	storeys, err := conf.GetAssets(context.Background(),
 		appdb.AssetWhere.Kind.EQ(string(conf.StoreyAssetKind)),
-		//		appdb.AssetWhere.ProjectID.EQ(projectId),
+		appdb.AssetWhere.ProjectID.EQ(projectId),
 	)
 	if err != nil {
 		return api.Dashboard{}, err
@@ -143,7 +143,7 @@ func SignifyOccupancyDashboard(projectId string) (api.Dashboard, error) {
 		spaces, err := conf.GetAssets(context.Background(),
 			appdb.AssetWhere.ParentUUID.EQ(null.StringFrom(storey.UUID)),
 			appdb.AssetWhere.Kind.EQ(string(conf.SpaceAssetKind)),
-			//			appdb.AssetWhere.ProjectID.EQ(projectId),
+			appdb.AssetWhere.ProjectID.EQ(projectId),
 		)
 		if err != nil {
 			return api.Dashboard{}, err
@@ -194,7 +194,7 @@ func SignifyTemperatureDashboard(projectId string) (api.Dashboard, error) {
 
 	storeys, err := conf.GetAssets(context.Background(),
 		appdb.AssetWhere.Kind.EQ(string(conf.StoreyAssetKind)),
-		//		appdb.AssetWhere.ProjectID.EQ(projectId),
+		appdb.AssetWhere.ProjectID.EQ(projectId),
 	)
 	if err != nil {
 		return api.Dashboard{}, err
@@ -224,7 +224,7 @@ func SignifyTemperatureDashboard(projectId string) (api.Dashboard, error) {
 		spaces, err := conf.GetAssets(context.Background(),
 			appdb.AssetWhere.ParentUUID.EQ(null.StringFrom(storey.UUID)),
 			appdb.AssetWhere.Kind.EQ(string(conf.SpaceAssetKind)),
-			//			appdb.AssetWhere.ProjectID.EQ(projectId),
+			appdb.AssetWhere.ProjectID.EQ(projectId),
 		)
 		if err != nil {
 			return api.Dashboard{}, err
@@ -275,7 +275,7 @@ func SignifyHumidityDashboard(projectId string) (api.Dashboard, error) {
 
 	storeys, err := conf.GetAssets(context.Background(),
 		appdb.AssetWhere.Kind.EQ(string(conf.StoreyAssetKind)),
-		//		appdb.AssetWhere.ProjectID.EQ(projectId),
+		appdb.AssetWhere.ProjectID.EQ(projectId),
 	)
 	if err != nil {
 		return api.Dashboard{}, err
@@ -305,7 +305,7 @@ func SignifyHumidityDashboard(projectId string) (api.Dashboard, error) {
 		spaces, err := conf.GetAssets(context.Background(),
 			appdb.AssetWhere.ParentUUID.EQ(null.StringFrom(storey.UUID)),
 			appdb.AssetWhere.Kind.EQ(string(conf.SpaceAssetKind)),
-			//			appdb.AssetWhere.ProjectID.EQ(projectId),
+			appdb.AssetWhere.ProjectID.EQ(projectId),
 		)
 		if err != nil {
 			return api.Dashboard{}, err
