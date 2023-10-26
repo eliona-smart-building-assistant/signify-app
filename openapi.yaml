@@ -176,11 +176,11 @@ paths:
           required: true
           schema:
             type: string
-            example:
-              Signify People Count
-              Signify Occupancy
-              Signify Temperature
-              Signify Humidity
+            enum:
+              - Signify People Count
+              - Signify Occupancy
+              - Signify Temperature
+              - Signify Humidity
         - name: projectId
           in: query
           description: Define the project the dashboard should be
