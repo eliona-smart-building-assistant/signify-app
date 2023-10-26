@@ -1,6 +1,6 @@
-# Eliona app to access CoffeeCloud machines
+# Eliona app to access Interact Lighting by Signify
 
-This app connects [Interact Lightning API](https://www.interact-lighting.com/) and gathers information about data of [Signify](https://www.signify.com/) spaces.
+This app connects [Interact Lighting API](https://www.interact-lighting.com/) and gathers information about data of [Signify](https://www.signify.com/) spaces.
 
 
 ## Configuration
