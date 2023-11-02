@@ -136,11 +136,16 @@ func GetSensorSpaces(config apiserver.Configuration, storey Object) ([]Object, e
 }
 
 func Subscribe(url string, messageHandler func(message Message)) {
-	// create channel for messages
 	messages := make(chan Message)
+	defer close(messages)
 
 	// start listening
-	go utilshttp.ListenWebSocketWithReconnect(subscriptionCreator(url), time.Second, messages)
+	go func() {
+		err := utilshttp.ListenWebSocketWithReconnectAlways(subscriptionCreator(url), time.Second*10, messages)
+		if err != nil {
+			log.Error("Listening", "Error listening on %s: %v", url, err)
+		}
+	}()
 	go func() {
 		log.Debug("Listening", "Start listening on: %s", url)
 		for message := range messages {
