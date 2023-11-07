@@ -80,6 +80,17 @@ func DeleteConfig(ctx context.Context, configID int64) error {
 	return nil
 }
 
+func UpsertConfig(ctx context.Context, config apiserver.Configuration) (apiserver.Configuration, error) {
+	dbConfig, err := dbConfigFromApiConfig(config)
+	if err != nil {
+		return apiserver.Configuration{}, fmt.Errorf("creating DB config from API config: %v", err)
+	}
+	if err := dbConfig.UpsertG(ctx, true, []string{"id"}, boil.Blacklist("id"), boil.Infer()); err != nil {
+		return apiserver.Configuration{}, fmt.Errorf("inserting DB config: %v", err)
+	}
+	return config, nil
+}
+
 func dbConfigFromApiConfig(apiConfig apiserver.Configuration) (dbConfig appdb.Configuration, err error) {
 	dbConfig.BaseURL = apiConfig.BaseUrl
 	dbConfig.Service = apiConfig.Service
