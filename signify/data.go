@@ -137,7 +137,6 @@ func GetSensorSpaces(config apiserver.Configuration, storey Object) ([]Object, e
 
 func Subscribe(url string, messageHandler func(message Message)) {
 	messages := make(chan Message)
-	defer close(messages)
 
 	// start listening
 	go func() {
