@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/eliona-smart-building-assistant/go-eliona/frontend"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"signify/apiserver"
 	"signify/appdb"
@@ -32,7 +33,7 @@ import (
 var ErrBadRequest = errors.New("bad request")
 
 func InsertConfig(ctx context.Context, config apiserver.Configuration) (apiserver.Configuration, error) {
-	dbConfig, err := dbConfigFromApiConfig(config)
+	dbConfig, err := dbConfigFromApiConfig(ctx, config)
 	if err != nil {
 		return apiserver.Configuration{}, fmt.Errorf("creating DB config from API config: %v", err)
 	}
@@ -81,7 +82,7 @@ func DeleteConfig(ctx context.Context, configID int64) error {
 }
 
 func UpsertConfig(ctx context.Context, config apiserver.Configuration) (apiserver.Configuration, error) {
-	dbConfig, err := dbConfigFromApiConfig(config)
+	dbConfig, err := dbConfigFromApiConfig(ctx, config)
 	if err != nil {
 		return apiserver.Configuration{}, fmt.Errorf("creating DB config from API config: %v", err)
 	}
@@ -91,7 +92,7 @@ func UpsertConfig(ctx context.Context, config apiserver.Configuration) (apiserve
 	return config, nil
 }
 
-func dbConfigFromApiConfig(apiConfig apiserver.Configuration) (dbConfig appdb.Configuration, err error) {
+func dbConfigFromApiConfig(ctx context.Context, apiConfig apiserver.Configuration) (dbConfig appdb.Configuration, err error) {
 	dbConfig.BaseURL = apiConfig.BaseUrl
 	dbConfig.Service = apiConfig.Service
 	dbConfig.ServiceID = apiConfig.ServiceId
@@ -112,6 +113,11 @@ func dbConfigFromApiConfig(apiConfig apiserver.Configuration) (dbConfig appdb.Co
 	dbConfig.Active = null.BoolFromPtr(apiConfig.Active)
 	if apiConfig.ProjectIDs != nil {
 		dbConfig.ProjectIds = *apiConfig.ProjectIDs
+	}
+
+	env := frontend.GetEnvironment(ctx)
+	if env != nil {
+		dbConfig.UserID = null.StringFrom(env.UserId)
 	}
 
 	return dbConfig, nil
@@ -137,6 +143,7 @@ func apiConfigFromDbConfig(dbConfig *appdb.Configuration) (apiConfig apiserver.C
 	}
 	apiConfig.Active = dbConfig.Active.Ptr()
 	apiConfig.ProjectIDs = common.Ptr[[]string](dbConfig.ProjectIds)
+	apiConfig.UserId = dbConfig.UserID.Ptr()
 	return apiConfig, nil
 }
 
