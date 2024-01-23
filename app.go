@@ -18,6 +18,8 @@ package main
 import (
 	"context"
 	"fmt"
+	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
+	"github.com/eliona-smart-building-assistant/go-eliona/client"
 	"github.com/eliona-smart-building-assistant/go-eliona/frontend"
 	"github.com/volatiletech/null/v8"
 	"net/http"
@@ -81,6 +83,7 @@ func collectAssets() {
 		}
 
 		common.RunOnceWithParam(func(config apiserver.Configuration) {
+
 			log.Info("main", "Start collecting for configuration id %d", *config.Id)
 
 			spaces, err := collectObjects(config)
@@ -89,11 +92,31 @@ func collectAssets() {
 				return
 			}
 
-			anyCreated, err := createAssets(config, spaces)
-			if err != nil {
-				log.Error("send", "Error sending assets: %v", err)
-				return
+			var anyCreated bool
+			if config.ProjectIDs != nil && len(*config.ProjectIDs) > 0 {
+
+				for _, projectId := range *config.ProjectIDs {
+					countCreated, err := createAssets(config, projectId, spaces)
+					if err != nil {
+						log.Error("send", "Error sending assets: %v", err)
+						return
+					}
+					anyCreated = anyCreated || countCreated > 0
+
+					if countCreated > 0 && config.UserId != nil {
+						err := notifyUser(*config.UserId, projectId, countCreated)
+						if err != nil {
+							log.Error("collect", "Error notifying users about CAC: %v", err)
+						}
+					}
+				}
+
+			} else {
+
+				log.Info("eliona", "No project id defined in configuration %d. No data is send to Eliona.", config.Id)
+
 			}
+
 			log.Info("main", "Finished collecting for configuration id %d successfully", *config.Id)
 
 			if anyCreated {
@@ -108,84 +131,112 @@ func collectAssets() {
 }
 
 // createAssets creates the complete asset tree, if the asset doesn't already exist
-func createAssets(config apiserver.Configuration, spaces []signify.Object) (bool, error) {
+func createAssets(config apiserver.Configuration, projectId string, spaces []signify.Object) (int, error) {
+	var countCreated = 0
 
-	if config.ProjectIDs == nil || len(*config.ProjectIDs) == 0 {
-		log.Info("eliona", "No project id defined in configuration %d. No data is send to Eliona.", config.Id)
-		return false, nil
+	rootAssetId, created, err := createAsset(config, projectId, eliona.RootAssetType, nil, nil, eliona.RootAssetType, conf.RootAssetKind, "Signify")
+	if err != nil {
+		return countCreated, fmt.Errorf("create root asset first time: %w", err)
+	}
+	if created {
+		countCreated++
 	}
 
-	var anyCreated = false
-	for _, projectId := range *config.ProjectIDs {
+	for _, site := range spaces {
 
-		rootAssetId, created, err := createAsset(config, projectId, eliona.RootAssetType, nil, nil, eliona.RootAssetType, conf.RootAssetKind, "Signify")
+		siteAssetId, created, err := createAsset(config, projectId, site.Uuid, nil, &rootAssetId, eliona.GroupAssetType, conf.SiteAssetKind, site.Name)
 		if err != nil {
-			return anyCreated, fmt.Errorf("create root asset first time: %w", err)
+			return countCreated, fmt.Errorf("create site asset first time: %w", err)
 		}
-		anyCreated = anyCreated || created
+		if created {
+			countCreated++
+		}
 
-		for _, site := range spaces {
+		for _, building := range site.Children {
 
-			siteAssetId, created, err := createAsset(config, projectId, site.Uuid, nil, &rootAssetId, eliona.GroupAssetType, conf.SiteAssetKind, site.Name)
+			buildingAssetId, created, err := createAsset(config, projectId, building.Uuid, common.Ptr(site.Uuid), &siteAssetId, eliona.GroupAssetType, conf.BuildingAssetKind, building.Name)
 			if err != nil {
-				return anyCreated, fmt.Errorf("create site asset first time: %w", err)
+				return countCreated, fmt.Errorf("create building asset first time: %w", err)
 			}
-			anyCreated = anyCreated || created
+			if created {
+				countCreated++
+			}
 
-			for _, building := range site.Children {
+			for _, storey := range building.Children {
 
-				buildingAssetId, created, err := createAsset(config, projectId, building.Uuid, common.Ptr(site.Uuid), &siteAssetId, eliona.GroupAssetType, conf.BuildingAssetKind, building.Name)
+				storeyAssetId, created, err := createAsset(config, projectId, storey.Uuid, common.Ptr(building.Uuid), &buildingAssetId, eliona.GroupAssetType, conf.StoreyAssetKind, storey.Name)
 				if err != nil {
-					return anyCreated, fmt.Errorf("create building asset first time: %w", err)
+					return countCreated, fmt.Errorf("create storey asset first time: %w", err)
 				}
-				anyCreated = anyCreated || created
+				if created {
+					countCreated++
+				}
 
-				for _, storey := range building.Children {
+				for _, space := range storey.Children {
 
-					storeyAssetId, created, err := createAsset(config, projectId, storey.Uuid, common.Ptr(building.Uuid), &buildingAssetId, eliona.GroupAssetType, conf.StoreyAssetKind, storey.Name)
-					if err != nil {
-						return anyCreated, fmt.Errorf("create storey asset first time: %w", err)
+					if space.SpaceType == signify.OccupancySpaceType {
+						_, created, err := createAsset(config, projectId, space.Uuid, common.Ptr(storey.Uuid), &storeyAssetId, eliona.OccupancyAssetType, conf.SpaceAssetKind, space.Name)
+						if err != nil {
+							return countCreated, fmt.Errorf("create space asset first time: %w", err)
+						}
+						if created {
+							countCreated++
+						}
 					}
-					anyCreated = anyCreated || created
-
-					for _, space := range storey.Children {
-
-						if space.SpaceType == signify.OccupancySpaceType {
-							_, created, err := createAsset(config, projectId, space.Uuid, common.Ptr(storey.Uuid), &storeyAssetId, eliona.OccupancyAssetType, conf.SpaceAssetKind, space.Name)
-							if err != nil {
-								return anyCreated, fmt.Errorf("create space asset first time: %w", err)
-							}
-							anyCreated = anyCreated || created
+					if space.SpaceType == signify.PeopleCountSpaceType {
+						_, created, err := createAsset(config, projectId, space.Uuid, common.Ptr(storey.Uuid), &storeyAssetId, eliona.PeopleCountAssetType, conf.SpaceAssetKind, space.Name)
+						if err != nil {
+							return countCreated, fmt.Errorf("create space asset first time: %w", err)
 						}
-						if space.SpaceType == signify.PeopleCountSpaceType {
-							_, created, err := createAsset(config, projectId, space.Uuid, common.Ptr(storey.Uuid), &storeyAssetId, eliona.PeopleCountAssetType, conf.SpaceAssetKind, space.Name)
-							if err != nil {
-								return anyCreated, fmt.Errorf("create space asset first time: %w", err)
-							}
-							anyCreated = anyCreated || created
+						if created {
+							countCreated++
 						}
-						if space.SpaceType == signify.TemperatureSpaceType {
-							_, created, err := createAsset(config, projectId, space.Uuid, common.Ptr(storey.Uuid), &storeyAssetId, eliona.TemperatureAssetType, conf.SpaceAssetKind, space.Name)
-							if err != nil {
-								return anyCreated, fmt.Errorf("create space asset first time: %w", err)
-							}
-							anyCreated = anyCreated || created
-						}
-						if space.SpaceType == signify.HumiditySpaceType {
-							_, created, err := createAsset(config, projectId, space.Uuid, common.Ptr(storey.Uuid), &storeyAssetId, eliona.HumidityAssetType, conf.SpaceAssetKind, space.Name)
-							if err != nil {
-								return anyCreated, fmt.Errorf("create space asset first time: %w", err)
-							}
-							anyCreated = anyCreated || created
-						}
-
 					}
+					if space.SpaceType == signify.TemperatureSpaceType {
+						_, created, err := createAsset(config, projectId, space.Uuid, common.Ptr(storey.Uuid), &storeyAssetId, eliona.TemperatureAssetType, conf.SpaceAssetKind, space.Name)
+						if err != nil {
+							return countCreated, fmt.Errorf("create space asset first time: %w", err)
+						}
+						if created {
+							countCreated++
+						}
+					}
+					if space.SpaceType == signify.HumiditySpaceType {
+						_, created, err := createAsset(config, projectId, space.Uuid, common.Ptr(storey.Uuid), &storeyAssetId, eliona.HumidityAssetType, conf.SpaceAssetKind, space.Name)
+						if err != nil {
+							return countCreated, fmt.Errorf("create space asset first time: %w", err)
+						}
+						if created {
+							countCreated++
+						}
+					}
+
 				}
 			}
 		}
 	}
 
-	return anyCreated, nil
+	return countCreated, nil
+}
+
+func notifyUser(userId string, projectId string, countCreated int) error {
+	receipt, _, err := client.NewClient().CommunicationAPI.
+		PostNotification(client.AuthenticationContext()).
+		Notification(
+			api.Notification{
+				User:      userId,
+				ProjectId: *api.NewNullableString(&projectId),
+				Message: *api.NewNullableTranslation(&api.Translation{
+					De: api.PtrString(fmt.Sprintf("Signify App hat %d neue Assets angelegt. Diese sind nun im Asset-Management verfügbar.", countCreated)),
+					En: api.PtrString(fmt.Sprintf("Signify app added %d new assets. They are now available in Asset Management.", countCreated)),
+				}),
+			}).
+		Execute()
+	log.Debug("eliona", "posted notification about CAC: %v", receipt)
+	if err != nil {
+		return fmt.Errorf("posting notification: %v", err)
+	}
+	return nil
 }
 
 func collectObjects(config apiserver.Configuration) ([]signify.Object, error) {

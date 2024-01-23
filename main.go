@@ -51,6 +51,11 @@ func main() {
 		asset.InitAssetTypeFiles("eliona/*-asset-type.json"),
 	)
 
+	// Patch the app to v1.1.0
+	app.Patch(db.Pool(), app.AppName(), "010100",
+		app.ExecSqlFile("conf/v1.1.0.sql"),
+	)
+
 	// Start listening for data
 	go subscribeData()
 
