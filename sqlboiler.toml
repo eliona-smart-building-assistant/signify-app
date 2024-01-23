@@ -1,0 +1,30 @@
+output   = "abbdb"
+pkgname  = "abbdb"
+add-global-variants = true
+wipe     = true
+no-tests = true
+add-enum-types = true
+
+[psql]
+dbname = "postgres"
+host   = "localhost"
+port   = 5432
+user   = "postgres"
+pass   = "secret"
+schema = "hailo"
+sslmode = "disable"
+
+[[types]]
+[types.match]
+type = "null.Int"
+nullable = true
+
+[types.replace]
+type = "null.Int32"
+
+[[types]]
+[types.match]
+type = "int"
+
+[types.replace]
+type = "int32"
