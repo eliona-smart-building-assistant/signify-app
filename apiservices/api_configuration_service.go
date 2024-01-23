@@ -18,6 +18,8 @@ package apiservices
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/eliona-smart-building-assistant/go-eliona/frontend"
 	"net/http"
 	"signify/apiserver"
 	"signify/conf"
@@ -35,6 +37,8 @@ func NewConfigurationApiService() apiserver.ConfigurationAPIServicer {
 }
 
 func (s *ConfigurationApiService) GetConfigurations(ctx context.Context) (apiserver.ImplResponse, error) {
+	env := frontend.GetEnvironment(ctx)
+	fmt.Printf("XXXXX: %v", env)
 	configs, err := conf.GetConfigs(ctx)
 	if err != nil {
 		return apiserver.ImplResponse{Code: http.StatusInternalServerError}, err

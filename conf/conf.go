@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/eliona-smart-building-assistant/go-eliona/frontend"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"signify/apiserver"
 	"signify/appdb"
@@ -32,6 +33,9 @@ import (
 var ErrBadRequest = errors.New("bad request")
 
 func InsertConfig(ctx context.Context, config apiserver.Configuration) (apiserver.Configuration, error) {
+	ddd := frontend.GetEnvironment(ctx)
+	fmt.Printf("%v", ddd)
+
 	dbConfig, err := dbConfigFromApiConfig(config)
 	if err != nil {
 		return apiserver.Configuration{}, fmt.Errorf("creating DB config from API config: %v", err)
