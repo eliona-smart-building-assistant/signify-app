@@ -16,7 +16,6 @@
 package main
 
 import (
-	"github.com/eliona-smart-building-assistant/go-eliona/asset"
 	"time"
 
 	"github.com/eliona-smart-building-assistant/go-eliona/app"
@@ -37,24 +36,13 @@ func main() {
 	boil.SetDB(database)
 
 	// Set the database logging level.
-	if log.Lev() >= log.DebugLevel {
+	if log.Lev() >= log.TraceLevel {
 		boil.DebugMode = true
-		boil.DebugWriter = log.GetWriter(log.DebugLevel, "database")
+		boil.DebugWriter = log.GetWriter(log.TraceLevel, "database")
 	}
 
-	// Necessary to close used init resources, because db.Pool() is used in this app.
-	defer db.ClosePool()
-
-	// Init the app before the first run.
-	app.Init(db.Pool(), app.AppName(),
-		app.ExecSqlFile("conf/init.sql"),
-		asset.InitAssetTypeFiles("eliona/*-asset-type.json"),
-	)
-
-	// Patch the app to v1.1.0
-	app.Patch(db.Pool(), app.AppName(), "010100",
-		app.ExecSqlFile("conf/v1.1.0.sql"),
-	)
+	// Initialize the app
+	initialization()
 
 	// Start listening for data
 	go subscribeData()
