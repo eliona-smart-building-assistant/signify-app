@@ -19,8 +19,11 @@ import (
 	"context"
 	"fmt"
 	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
+	"github.com/eliona-smart-building-assistant/go-eliona/app"
+	"github.com/eliona-smart-building-assistant/go-eliona/asset"
 	"github.com/eliona-smart-building-assistant/go-eliona/client"
 	"github.com/eliona-smart-building-assistant/go-eliona/frontend"
+	"github.com/eliona-smart-building-assistant/go-utils/db"
 	"github.com/volatiletech/null/v8"
 	"net/http"
 	"signify/apiserver"
@@ -36,6 +39,25 @@ import (
 	utilshttp "github.com/eliona-smart-building-assistant/go-utils/http"
 	"github.com/eliona-smart-building-assistant/go-utils/log"
 )
+
+func initialization() {
+	ctx := context.Background()
+
+	// Necessary to close used init resources
+	conn := db.NewInitConnectionWithContextAndApplicationName(ctx, app.AppName())
+	defer conn.Close(ctx)
+
+	// Init the app before the first run.
+	app.Init(db.Pool(), app.AppName(),
+		app.ExecSqlFile("conf/init.sql"),
+		asset.InitAssetTypeFiles("eliona/*-asset-type.json"),
+	)
+
+	// Patch the app to v1.1.0
+	app.Patch(db.Pool(), app.AppName(), "010100",
+		app.ExecSqlFile("conf/v1.1.0.sql"),
+	)
+}
 
 func collectAssets() {
 	configs, err := conf.GetConfigs(context.Background())
