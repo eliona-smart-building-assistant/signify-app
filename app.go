@@ -48,13 +48,13 @@ func initialization() {
 	defer conn.Close(ctx)
 
 	// Init the app before the first run.
-	app.Init(db.Pool(), app.AppName(),
+	app.Init(conn, app.AppName(),
 		app.ExecSqlFile("conf/init.sql"),
 		asset.InitAssetTypeFiles("eliona/*-asset-type.json"),
 	)
 
 	// Patch the app to v1.1.0
-	app.Patch(db.Pool(), app.AppName(), "010100",
+	app.Patch(conn, app.AppName(), "010100",
 		app.ExecSqlFile("conf/v1.1.0.sql"),
 	)
 }
