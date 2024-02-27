@@ -18,7 +18,7 @@ openapi: 3.0.3
 info:
   version: 1.0.0
   title: Signify app API
-  description: API to access and configure the signify app
+  description: API to access and configure the Signify app
 externalDocs:
   description: Find out more about the signify app
   url: https://github.com/eliona-smart-building-assistant/signify-app
