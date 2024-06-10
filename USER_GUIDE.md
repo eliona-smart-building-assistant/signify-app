@@ -20,8 +20,6 @@ The Signify app requires configuration through Eliona’s settings interface. Be
 
 Create credentials in Signify Service to connect the Signify services from Eliona. All required credentials are listed below in the [configuration section](#configure-the-signify-app).  
 
-
-ChatGPT
 Go to the [Interact Lighting website](https://www.developer.interact-lighting.com/) and create an Eliona client to obtain the app's key and secret needed to access the API.
 Additionally, you must identify the service you want to connect to, as this information is provided by Interact Lighting.
 
