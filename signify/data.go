@@ -72,8 +72,8 @@ type Message struct {
 	SpaceId        string          `json:"spaceId"`
 	Timestamp      int64           `json:"timestamp"`
 	Count          *int            `json:"count" eliona:"people_count" subtype:"input"`
-	Temperature    *int            `json:"temperature" eliona:"temperature" subtype:"input"`
-	Humidity       *int            `json:"humidity" eliona:"humidity" subtype:"input"`
+	Temperature    *float64        `json:"temperature" eliona:"temperature" subtype:"input"`
+	Humidity       *float64        `json:"humidity" eliona:"humidity" subtype:"input"`
 	Unit           *string         `json:"unit"`
 	OccupancyState *OccupancyState `json:"occupancy"`
 	Occupancy      *int            `json:"-" eliona:"occupancy" subtype:"input"`
