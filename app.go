@@ -107,14 +107,12 @@ func collectAssets() {
 		common.RunOnceWithParam(func(config apiserver.Configuration) {
 
 			log.Info("main", "Start collecting for configuration id %d", *config.Id)
-
 			spaces, err := collectObjects(config)
 			if err != nil {
 				log.Error("collect", "Error collect spaces: %v", err)
 				return
 			}
 
-			var anyCreated bool
 			if config.ProjectIDs != nil && len(*config.ProjectIDs) > 0 {
 
 				for _, projectId := range *config.ProjectIDs {
@@ -123,7 +121,6 @@ func collectAssets() {
 						log.Error("send", "Error sending assets: %v", err)
 						return
 					}
-					anyCreated = anyCreated || countCreated > 0
 
 					if countCreated > 0 && config.UserId != nil {
 						err := notifyUser(*config.UserId, projectId, countCreated)
@@ -138,13 +135,10 @@ func collectAssets() {
 				log.Info("eliona", "No project id defined in configuration %d. No data is send to Eliona.", config.Id)
 
 			}
-
 			log.Info("main", "Finished collecting for configuration id %d successfully", *config.Id)
 
-			if anyCreated {
-				log.Info("main", "Cancel existing subscriptions and resubscribe all")
-				subscribeData()
-			}
+			log.Info("main", "(Re)starting subscriptions and resubscribe all")
+			subscribeData(config)
 
 			time.Sleep(time.Second * time.Duration(config.RefreshInterval))
 		}, config, *config.Id)
@@ -341,57 +335,43 @@ func createAsset(config apiserver.Configuration, projectId string, identifier st
 var subscriptionsMutex sync.Mutex
 
 // subscribeData subscribes for new data
-func subscribeData() {
-
-	configs, err := conf.GetConfigs(context.Background())
-	if err != nil {
-		log.Fatal("conf", "Couldn't read configs from DB: %v", err)
-		return
-	}
-	if len(configs) == 0 {
-		return
-	}
+func subscribeData(config apiserver.Configuration) {
 
 	// wait until a previous starting of socket is finished
 	// otherwise not all previous connections can be closed
 	subscriptionsMutex.Lock()
 	defer subscriptionsMutex.Unlock()
 
-	signify.CloseExistingSubscriptions()
+	log.Info("main", "Stopping all previous subscriptions for configuration id %d", *config.Id)
 
-	// create all connection for all configurations
-	for _, config := range configs {
+	signify.CloseExistingSubscriptions(config)
 
-		if !conf.IsConfigEnabled(config) {
-			continue
-		}
+	log.Info("main", "Start subscribing new data for configuration id %d", *config.Id)
 
-		log.Info("main", "Start subscribing new data for configuration id %d", *config.Id)
-
-		buildings, err := conf.GetAssets(context.Background(),
-			appdb.AssetWhere.ConfigurationID.EQ(null.Int64FromPtr(config.Id).Int64),
-			appdb.AssetWhere.Kind.EQ(string(conf.BuildingAssetKind)),
-		)
-		if err != nil {
-			log.Fatal("listening", "Error collect buildings: %v", err)
-			return
-		}
-
-		for _, subscriptionType := range []signify.SubscriptionType{signify.OccupancySubscriptionType, signify.HumiditySubscriptionType, signify.TemperatureSubscriptionType, signify.PeopleCountSubscriptionType} {
-			for _, building := range buildings {
-				url, err := signify.GetSubscriptionUrl(config, building.UUID, subscriptionType)
-				if err != nil {
-					log.Error("listening", "Error getting websocket URL: %v", err)
-					continue
-				}
-				signify.Subscribe(*url, func(message signify.Message) {
-					upsertData(message, config)
-				})
-			}
-		}
-
-		log.Info("main", "Finished subscribing new data for configuration id %d successfully", *config.Id)
+	buildings, err := conf.GetAssets(context.Background(),
+		appdb.AssetWhere.ConfigurationID.EQ(null.Int64FromPtr(config.Id).Int64),
+		appdb.AssetWhere.Kind.EQ(string(conf.BuildingAssetKind)),
+	)
+	if err != nil {
+		log.Fatal("listening", "Error collect buildings: %v", err)
+		return
 	}
+
+	for _, subscriptionType := range []signify.SubscriptionType{signify.OccupancySubscriptionType, signify.HumiditySubscriptionType, signify.TemperatureSubscriptionType, signify.PeopleCountSubscriptionType} {
+		for _, building := range buildings {
+			url, err := signify.GetSubscriptionUrl(config, building.UUID, subscriptionType)
+			if err != nil {
+				log.Error("listening", "Error getting websocket URL: %v", err)
+				continue
+			}
+			signify.Subscribe(config, *url, func(message signify.Message) {
+				upsertData(message, config)
+			})
+		}
+	}
+
+	log.Info("main", "Finished subscribing new data for configuration id %d successfully", *config.Id)
+
 }
 
 // upsertData upsert data
