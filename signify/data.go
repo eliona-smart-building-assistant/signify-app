@@ -85,7 +85,7 @@ type WebsocketUrl struct {
 	Errors    any     `json:"errors"`
 }
 
-var subscriptions []*websocket.Conn
+var subscriptions = make(map[int64][]*websocket.Conn)
 
 func fetchObjects(config apiserver.Configuration, endpoint string, objectType ObjectType) ([]Object, error) {
 	token, err := getBearerToken(config)
@@ -95,11 +95,13 @@ func fetchObjects(config apiserver.Configuration, endpoint string, objectType Ob
 
 	request, err := utilshttp.NewRequestWithBearer(config.BaseUrl+endpoint, token.Token)
 	if err != nil {
+		resetBearerToken(config)
 		return nil, fmt.Errorf("request %s: %w", endpoint, err)
 	}
 
 	objects, err := utilshttp.Read[[]Object](request, time.Duration(*config.RequestTimeout)*time.Second, true)
 	if err != nil {
+		resetBearerToken(config)
 		return nil, fmt.Errorf("read %s: %w", endpoint, err)
 	}
 	var filteredObjects = make([]Object, 0)
@@ -135,12 +137,17 @@ func GetSensorSpaces(config apiserver.Configuration, storey Object) ([]Object, e
 	return fetchObjects(config, "/interact/api/officeCloud/v1/buildingStoreys/"+storey.Uuid+"/sensorSpaces", SpaceObjectType)
 }
 
-func Subscribe(url string, messageHandler func(message Message)) {
+func Subscribe(config apiserver.Configuration, url string, messageHandler func(message Message)) {
 	messages := make(chan Message)
 
 	// start listening
 	go func() {
-		err := utilshttp.ListenWebSocketWithReconnectAlways(subscriptionCreator(url), time.Second*10, messages)
+		subscription, err := createSubscription(config, url)
+		if err != nil {
+			log.Error("Listening", "Error creating subscription on %s: %v", url, err)
+		}
+		err = utilshttp.ListenWebSocket(subscription, messages)
+		close(messages)
 		if err != nil {
 			log.Error("Listening", "Error listening on %s: %v", url, err)
 		}
@@ -161,25 +168,32 @@ func Subscribe(url string, messageHandler func(message Message)) {
 			}
 			messageHandler(message)
 		}
-		log.Info("Listening", "Stop listening on %s", url)
+		log.Info("Listening", "n %s", url)
 	}()
 }
 
-func subscriptionCreator(url string) func() (*websocket.Conn, error) {
-	return func() (*websocket.Conn, error) {
-		log.Info("Listening", "Create subscription for %s", url)
-		subscription, err := utilshttp.NewWebSocketConnectionWithApiKey(url, "", "")
-		subscriptions = append(subscriptions, subscription)
-		return subscription, err
+func createSubscription(config apiserver.Configuration, url string) (*websocket.Conn, error) {
+	log.Info("Listening", "Create subscription for %s", url)
+	subscription, err := utilshttp.NewWebSocketConnectionWithApiKey(url, "", "")
+	if err != nil {
+		return nil, err
 	}
+	var _, found = subscriptions[*config.Id]
+	if !found {
+		subscriptions[*config.Id] = []*websocket.Conn{}
+	}
+	subscriptions[*config.Id] = append(subscriptions[*config.Id], subscription)
+	return subscription, nil
 }
 
-func CloseExistingSubscriptions() {
-	for _, subscription := range subscriptions {
+func CloseExistingSubscriptions(config apiserver.Configuration) {
+	for _, subscription := range subscriptions[*config.Id] {
 		if subscription != nil {
+			log.Debug("Listening", "Stopping listening for %v: %v", subscription)
 			_ = subscription.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 		}
 	}
+	subscriptions[*config.Id] = []*websocket.Conn{}
 }
 
 func GetSubscriptionUrl(config apiserver.Configuration, buildingUUID string, subscriptionType SubscriptionType) (*string, error) {
