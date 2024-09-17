@@ -44,9 +44,6 @@ func main() {
 	// Initialize the app
 	initialization()
 
-	// Start listening for data
-	go subscribeData()
-
 	// Starting the service to collect the data for this app.
 	common.WaitForWithOs(
 		common.Loop(collectAssets, time.Second),

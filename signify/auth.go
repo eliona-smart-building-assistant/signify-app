@@ -52,13 +52,18 @@ func getBearerToken(config apiserver.Configuration) (*BearerToken, error) {
 	}
 	token.Issued = time.Now().Unix()
 	bearerTokens[*config.Id] = &token
-	log.Debug("auth", "Created new bearerToken: %.10s...", token.Token)
+	log.Info("auth", "Created new Bearer Token for %d: %.10s...", *config.Id, token.Token)
 	return &token, nil
 }
 
 var bearerTokens = make(map[int64]*BearerToken)
 
+func resetBearerToken(config apiserver.Configuration) {
+	log.Info("auth", "Reset Bearer Token for %d", *config.Id)
+	delete(bearerTokens, *config.Id)
+}
+
 func bearerTokenValid(config apiserver.Configuration) bool {
 	token, found := bearerTokens[*config.Id]
-	return found && token.Token != "" && token.Issued+int64(token.ExpiresIn) >= time.Now().Unix()-60
+	return found && token.Token != "" && token.Issued+int64(token.ExpiresIn) >= time.Now().Unix()-300
 }
