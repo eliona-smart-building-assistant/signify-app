@@ -20,8 +20,8 @@ info:
   title: Signify app API
   description: API to access and configure the Signify app
 externalDocs:
-  description: Find out more about the signify app
-  url: https://github.com/eliona-smart-building-assistant/signify-app
+  description: Find out more about the Signify app
+  url: https://doc.eliona.io/collection/v/eliona-english/eliona-apps/apps/signify
 servers:
   - url: http://signify/v1
 
@@ -269,8 +269,7 @@ components:
           nullable: true
         projectIDs:
           type: array
-          description:
-            List of Eliona project ids for which this device should collect data.
+          description: List of Eliona project ids for which this device should collect data.
             For each project id all smart devices are automatically created as an
             asset in Eliona. The mapping between Eliona is stored as an asset mapping
             in the signify app.
@@ -283,8 +282,7 @@ components:
         userId:
           type: string
           readOnly: true
-          description:
-            ID of the last Eliona user who created or updated the configuration
+          description: ID of the last Eliona user who created or updated the configuration
           nullable: true
           example: "90"
 
