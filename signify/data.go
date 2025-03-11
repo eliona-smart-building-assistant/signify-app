@@ -17,13 +17,14 @@ package signify
 
 import (
 	"fmt"
+	"signify/apiserver"
+	"signify/eliona"
+	"time"
+
 	"github.com/eliona-smart-building-assistant/go-utils/common"
 	utilshttp "github.com/eliona-smart-building-assistant/go-utils/http"
 	"github.com/eliona-smart-building-assistant/go-utils/log"
 	"github.com/gorilla/websocket"
-	"signify/apiserver"
-	"signify/eliona"
-	"time"
 )
 
 type Object struct {
@@ -189,7 +190,7 @@ func createSubscription(config apiserver.Configuration, url string) (*websocket.
 func CloseExistingSubscriptions(config apiserver.Configuration) {
 	for _, subscription := range subscriptions[*config.Id] {
 		if subscription != nil {
-			log.Debug("Listening", "Stopping listening for %v: %v", subscription)
+			log.Debug("Listening", "Stopping listening for subscription %v", subscription)
 			_ = subscription.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 		}
 	}
